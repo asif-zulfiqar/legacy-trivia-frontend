@@ -1,0 +1,47 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/install-state.gz
+
+# Next.js build output
+/.next/
+/out/
+
+# Production build
+/build
+
+# Environment variables (local only)
+.env
+.env*.local
+
+# Vercel
+.vercel
+
+# Debugging logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo
+
+# Coverage directory used by testing tools
+/coverage
+
+# Optional: if you ever use Turbopack cache
+.turbo
+
+# Optional: if you use Playwright or other testing tools
+/test-results/
+playwright-report/

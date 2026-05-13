@@ -1,0 +1,41 @@
+@import url('https://fonts.googleapis.com/css2?family=Londrina+Solid:wght@100;300;400;900&display=swap');
+@import "tailwindcss";
+
+/* ── Legacy Trivia – Design Tokens ───────────────────────────────────────── */
+@theme inline {
+  /* Brand colours */
+  --color-primary: #6500E8;
+  --color-brand-purple:   #7B2FFF;
+  --color-brand-violet:   #5B1FC8;
+  --color-brand-glow:     #9B5FFF;
+  --color-cosmic-dark:    #040C1A;
+  --color-cosmic-navy:    #070F22;
+  --color-cosmic-deep:    #0B1535;
+  --color-star-white:     #EDEEFF;
+  --font-londrina: "Londrina Solid", sans-serif;
+}
+
+/* ── Base reset ──────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-cosmic-dark, #040C1A);
+  color: var(--color-star-white, #EDEEFF);
+  font-family: var(--font-inter), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+input:-webkit-autofill,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+  -webkit-text-fill-color: #fff !important;
+  transition: background-color 9999s ease-in-out 0s;
+  box-shadow: 0 0 0px 1000px transparent inset !important;
+}
