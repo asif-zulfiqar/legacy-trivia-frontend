@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { VerifyEmailForm } from "@/components/auth/AuthForms";
 
@@ -6,5 +7,9 @@ export const metadata: Metadata = {
 };
 
 export default function VerifyEmailPage() {
-  return <VerifyEmailForm />;
+  return (
+    <Suspense>
+      <VerifyEmailForm />
+    </Suspense>
+  );
 }
