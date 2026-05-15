@@ -139,14 +139,25 @@ function GoogleButton({
     callbackRef.current = onCredential;
   }, [onCredential]);
 
-  // Render Google's button at the current wrapper width and keep it in sync.
-  const renderWithCurrentWidth = useCallback(() => {
-    if (!overlayRef.current || !wrapperRef.current) return;
-    const width = Math.max(
-      200,
-      Math.min(400, Math.round(wrapperRef.current.clientWidth)),
-    );
-    renderGoogleButton(overlayRef.current, { width });
+  // Render Google's GSI button at a fixed size, then apply CSS transform
+  // so the rendered button fills the wrapper exactly. Hit-testing follows
+  // the transform, so clicks anywhere on the wrapper land on Google's
+  // (invisible) button. Works identically in dev and production.
+  const GSI_W = 400;
+  const GSI_H = 44; // typical "large" GSI button height
+  const TARGET_H = 55; // our custom button height
+
+  const fit = useCallback(() => {
+    const wrapper = wrapperRef.current;
+    const overlay = overlayRef.current;
+    if (!wrapper || !overlay) return;
+    const w = wrapper.clientWidth;
+    if (w <= 0) return;
+    const iframe = overlay.querySelector("iframe");
+    const renderedH = iframe?.clientHeight || GSI_H;
+    const sx = w / GSI_W;
+    const sy = TARGET_H / renderedH;
+    overlay.style.transform = `scale(${sx}, ${sy})`;
   }, []);
 
   useEffect(() => {
@@ -159,28 +170,33 @@ function GoogleButton({
       try {
         await initGoogleSignIn(GOOGLE_CLIENT_ID);
         if (cancelled || !overlayRef.current) return;
-        renderWithCurrentWidth();
-        setReady(true);
+        renderGoogleButton(overlayRef.current, { width: GSI_W });
+        // Wait one frame so the iframe is mounted before measuring.
+        requestAnimationFrame(() => {
+          if (!cancelled) {
+            fit();
+            setReady(true);
+          }
+        });
       } catch {
-        // GSI failed to load; fallback handled in click
+        // GSI failed to load; fallback toast on click
       }
     })();
     return () => {
       cancelled = true;
       cleanup();
     };
-  }, [renderWithCurrentWidth]);
+  }, [fit]);
 
-  // Resize observer — keeps the (invisible) Google button matching our button.
+  // Keep the rendered Google button matching the wrapper as the layout
+  // changes (responsive resize, font load shift, etc.).
   useEffect(() => {
-    if (!wrapperRef.current) return;
+    if (!wrapperRef.current || !ready) return;
     const el = wrapperRef.current;
-    const ro = new ResizeObserver(() => {
-      if (ready) renderWithCurrentWidth();
-    });
+    const ro = new ResizeObserver(() => fit());
     ro.observe(el);
     return () => ro.disconnect();
-  }, [ready, renderWithCurrentWidth]);
+  }, [ready, fit]);
 
   const handleClickFallback = () => {
     if (!GOOGLE_CLIENT_ID) {
@@ -193,21 +209,31 @@ function GoogleButton({
   };
 
   return (
-    <div ref={wrapperRef} className="relative">
+    <div
+      ref={wrapperRef}
+      className="relative h-[55px] w-full"
+      style={{ cursor: ready && !disabled ? "pointer" : "default" }}
+    >
+      {/* Visual custom button (behind, gets clicks ONLY when GSI not ready) */}
       <button
         type="button"
         disabled={disabled}
         onClick={handleClickFallback}
-        className="flex h-[55px] w-full items-center justify-center gap-2.5 rounded-full font-londrina text-lg font-[900] leading-6 text-[#091739] bg-white transition hover:bg-white/90 cursor-pointer shadow-[inset_0px_2px_1px_0px_#FFFFFF40,inset_0px_-4px_2px_0px_#00000040,0px_0px_1px_4px_#FFFFFF1A,0px_0px_180px_0px_#9917FF] disabled:opacity-70"
+        className="absolute inset-0 z-0 flex h-[55px] w-full items-center justify-center gap-2.5 rounded-full font-londrina text-lg font-[900] leading-6 text-[#091739] bg-white transition hover:bg-white/90 cursor-pointer shadow-[inset_0px_2px_1px_0px_#FFFFFF40,inset_0px_-4px_2px_0px_#00000040,0px_0px_1px_4px_#FFFFFF1A,0px_0px_180px_0px_#9917FF] disabled:opacity-70"
       >
         <FcGoogle className="size-[29px]" aria-hidden="true" />
         {label}
       </button>
+      {/* Google's real (invisible) button — scaled to fill the wrapper exactly */}
       <div
         ref={overlayRef}
         aria-hidden="true"
-        className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-full opacity-0 [&>div]:!h-full [&>div>div]:!h-full [&_iframe]:!h-full"
-        style={{ pointerEvents: ready && !disabled ? "auto" : "none" }}
+        className="absolute left-0 top-0 z-10 opacity-0"
+        style={{
+          transformOrigin: "top left",
+          pointerEvents: ready && !disabled ? "auto" : "none",
+          cursor: "pointer",
+        }}
       />
     </div>
   );
