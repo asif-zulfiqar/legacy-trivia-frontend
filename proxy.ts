@@ -17,7 +17,7 @@ function matches(pathname: string, prefixes: string[]) {
   );
 }
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const isAuthed = req.cookies.get(AUTH_HINT_COOKIE)?.value === "1";
 

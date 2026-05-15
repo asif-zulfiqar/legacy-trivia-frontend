@@ -25,6 +25,7 @@ import {
   renderGoogleButton,
   setGoogleCallback,
 } from "@/lib/auth/google";
+import { navigateAfterAuth } from "@/lib/auth/navigate";
 import {
   useForgotPassword,
   useGoogleAuth,
@@ -129,6 +130,7 @@ function GoogleButton({
   onCredential: (idToken: string) => void;
   disabled?: boolean;
 }) {
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
   const overlayRef = useRef<HTMLDivElement | null>(null);
   const [ready, setReady] = useState(false);
   const callbackRef = useRef(onCredential);
@@ -136,6 +138,16 @@ function GoogleButton({
   useEffect(() => {
     callbackRef.current = onCredential;
   }, [onCredential]);
+
+  // Render Google's button at the current wrapper width and keep it in sync.
+  const renderWithCurrentWidth = useCallback(() => {
+    if (!overlayRef.current || !wrapperRef.current) return;
+    const width = Math.max(
+      200,
+      Math.min(400, Math.round(wrapperRef.current.clientWidth)),
+    );
+    renderGoogleButton(overlayRef.current, { width });
+  }, []);
 
   useEffect(() => {
     if (!GOOGLE_CLIENT_ID) return;
@@ -147,7 +159,7 @@ function GoogleButton({
       try {
         await initGoogleSignIn(GOOGLE_CLIENT_ID);
         if (cancelled || !overlayRef.current) return;
-        renderGoogleButton(overlayRef.current);
+        renderWithCurrentWidth();
         setReady(true);
       } catch {
         // GSI failed to load; fallback handled in click
@@ -157,7 +169,18 @@ function GoogleButton({
       cancelled = true;
       cleanup();
     };
-  }, []);
+  }, [renderWithCurrentWidth]);
+
+  // Resize observer — keeps the (invisible) Google button matching our button.
+  useEffect(() => {
+    if (!wrapperRef.current) return;
+    const el = wrapperRef.current;
+    const ro = new ResizeObserver(() => {
+      if (ready) renderWithCurrentWidth();
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ready, renderWithCurrentWidth]);
 
   const handleClickFallback = () => {
     if (!GOOGLE_CLIENT_ID) {
@@ -170,7 +193,7 @@ function GoogleButton({
   };
 
   return (
-    <div className="relative">
+    <div ref={wrapperRef} className="relative">
       <button
         type="button"
         disabled={disabled}
@@ -183,7 +206,7 @@ function GoogleButton({
       <div
         ref={overlayRef}
         aria-hidden="true"
-        className="absolute inset-0 overflow-hidden rounded-full opacity-0"
+        className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-full opacity-0 [&>div]:!h-full [&>div>div]:!h-full [&_iframe]:!h-full"
         style={{ pointerEvents: ready && !disabled ? "auto" : "none" }}
       />
     </div>
@@ -413,7 +436,6 @@ function ImageFrame() {
 }
 
 function useGoogleSignIn(redirectTo: string) {
-  const router = useRouter();
   const googleAuth = useGoogleAuth();
 
   const onCredential = useCallback(
@@ -423,13 +445,13 @@ function useGoogleSignIn(redirectTo: string) {
         {
           onSuccess: () => {
             toast.success("Signed in with Google.");
-            router.push(redirectTo);
+            navigateAfterAuth(redirectTo);
           },
           onError: (err) => toast.error(extractErrorMessage(err)),
         },
       );
     },
-    [googleAuth, router, redirectTo],
+    [googleAuth, redirectTo],
   );
 
   return { onCredential, isPending: googleAuth.isPending };
@@ -569,7 +591,7 @@ export function LoginForm() {
           return;
         }
         toast.success(response.message || "Logged in.");
-        router.push(redirect);
+        navigateAfterAuth(redirect);
       },
       onError: (err) => toast.error(extractErrorMessage(err)),
     });
@@ -736,7 +758,7 @@ export function VerifyEmailForm() {
           title={`Welcome, ${welcomeName}!`}
           description="You have been granted access to The Legacy Ascent. This is a seasonal event. Your journey begins now. May your mind be sharp and your ascent be legendary."
           buttonLabel="Begin Ascent"
-          onAction={() => router.push("/game")}
+          onAction={() => navigateAfterAuth("/game")}
         />
       ) : null}
     </>
