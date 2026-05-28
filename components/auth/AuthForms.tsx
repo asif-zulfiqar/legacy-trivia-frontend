@@ -617,6 +617,10 @@ export function LoginForm() {
           return;
         }
         toast.success(response.message || "Logged in.");
+        localStorage.setItem(
+          "auth",
+          JSON.stringify(response)
+        );
         navigateAfterAuth(redirect);
       },
       onError: (err) => toast.error(extractErrorMessage(err)),
