@@ -74,7 +74,7 @@ export function OnboardingFlow() {
             size="lg"
             onClick={finish}
             disabled={complete.isPending}
-            className="h-[55px] min-w-[170px] px-8 py-0 font-londrina text-[22px] font-[900] leading-none disabled:opacity-70"
+            className="h-[55px] min-w-[170px] px-8 py-0 font-londrina text-base md:text-[22px] font-[900] leading-none disabled:opacity-70"
           >
             {complete.isPending ? "Starting..." : "Start Game"}
             <span className="flex size-5 scale-[0.7] items-center justify-center">

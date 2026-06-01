@@ -25,7 +25,7 @@ export function NavButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`inline-flex h-[55px] min-w-[150px] items-center justify-center gap-2 rounded-full px-8 font-londrina text-[22px] font-[900] leading-none shadow-[inset_0px_2px_1px_0px_#FFFFFF66,inset_0px_-4px_2px_0px_#00000026] transition active:scale-95 disabled:opacity-50 disabled:pointer-events-none cursor-pointer ${VARIANT_STYLES[variant]}`}
+      className={`inline-flex h-[55px] min-w-[150px] items-center justify-center gap-2 rounded-full px-8 font-londrina text-base md:text-[22px] font-[900] leading-none shadow-[inset_0px_2px_1px_0px_#FFFFFF66,inset_0px_-4px_2px_0px_#00000026] transition active:scale-95 disabled:opacity-50 disabled:pointer-events-none cursor-pointer ${VARIANT_STYLES[variant]}`}
     >
       {label}
       <span className="flex size-5 scale-[0.7] items-center justify-center [&_path]:fill-[#091739]">

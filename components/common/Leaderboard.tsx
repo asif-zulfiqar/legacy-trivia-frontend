@@ -1,7 +1,10 @@
 "use client";
 
 import { User } from "lucide-react";
-import { useLeaderboard, type LeaderboardEntry } from "@/lib/leaderboard/queries";
+import {
+  useLeaderboard,
+  type LeaderboardEntry,
+} from "@/lib/leaderboard/queries";
 
 function RankAvatar({ color }: { color: string }) {
   return (
@@ -44,7 +47,7 @@ export function Leaderboard({ limit = 5 }: { limit?: number }) {
   const { data: entries, isLoading, isError } = useLeaderboard(limit);
 
   return (
-    <div className="w-full rounded-[28px] bg-gradient-to-b from-[#F6D98A] via-[#E7B85A] to-[#B07E2A] p-[3px] shadow-[0_0_40px_0_rgba(231,184,90,0.25)]">
+    <div className="w-full rounded-[30px] bg-gradient-to-b from-[#E1B04E] via-[#F6F3BE] to-[#BD8B36] p-[6px] shadow-[0_0_40px_0_rgba(231,184,90,0.25)]">
       <div className="rounded-[26px] bg-[#0E1430] p-3 sm:p-5">
         <div className="overflow-x-auto">
           <table className="w-full border-separate border-spacing-y-2">

@@ -2,12 +2,7 @@
 
 import { ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
-import {
-  BadgeIconOne,
-  BadgeIconTwo,
-  LifelineCardBgIcon,
-  SparkleIcon,
-} from "@/app/assets/icons";
+import { BadgeIconOne, BadgeIconTwo, SparkleIcon } from "@/app/assets/icons";
 import { Leaderboard } from "@/components/common/Leaderboard";
 import Image from "next/image";
 
@@ -24,7 +19,7 @@ function Chip({ children }: { children: ReactNode }) {
   return (
     <Button
       variant="ghost"
-      className="w-[150px] text-base font-londrina font-[900] uppercase text-white"
+      className="w-[170px] text-base font-londrina font-[900] uppercase text-white"
     >
       {children}
     </Button>
@@ -245,7 +240,7 @@ export function LeaderboardScreen({
         size="lg"
         onClick={onStartGame}
         disabled={starting}
-        className="mt-8 h-[55px] min-w-[220px] px-8 py-0 font-londrina text-[22px] font-[900] leading-none disabled:opacity-70"
+        className="mt-8 h-[55px] min-w-[220px] px-8 py-0 font-londrina text-base md:text-[22px] font-[900] leading-none disabled:opacity-70"
       >
         {starting ? "Starting..." : "Start Game"}
         <span className="flex size-5 scale-[0.7] items-center justify-center">
