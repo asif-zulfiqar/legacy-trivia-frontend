@@ -5,7 +5,13 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth/store";
 import { useMe } from "@/lib/auth/queries";
 
-export function AuthGate({ children }: { children: React.ReactNode }) {
+/**
+ * Guards the /onboarding route. Mirrors AuthGate, but additionally bounces
+ * users who have already finished onboarding straight to the game. Server-side
+ * `proxy.ts` only knows the auth-presence cookie, so completion is enforced
+ * here on the client where the verified user object is available.
+ */
+export function OnboardingGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const hydrated = useAuthStore((s) => s.hydrated);
   const accessToken = useAuthStore((s) => s.accessToken);
@@ -28,10 +34,10 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   }, [hydrated, isError, router]);
 
   useEffect(() => {
-    if (user && !user.onboardingCompleted) {
-      router.replace("/onboarding");
+    if (user?.onboardingCompleted) {
+      router.replace("/game");
     }
-  }, [user, router]);
+  }, [user?.onboardingCompleted, router]);
 
   if (!hydrated || (accessToken && isLoading && !user)) {
     return (
@@ -44,7 +50,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   }
 
   if (!accessToken && !refreshToken) return null;
-  if (user && !user.onboardingCompleted) return null;
+  if (user?.onboardingCompleted) return null;
 
   return <>{children}</>;
 }

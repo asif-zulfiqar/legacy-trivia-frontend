@@ -25,7 +25,7 @@ import {
   renderGoogleButton,
   setGoogleCallback,
 } from "@/lib/auth/google";
-import { navigateAfterAuth } from "@/lib/auth/navigate";
+import { navigateAfterAuth, destinationForUser } from "@/lib/auth/navigate";
 import {
   useForgotPassword,
   useGoogleAuth,
@@ -469,9 +469,12 @@ function useGoogleSignIn(redirectTo: string) {
       googleAuth.mutate(
         { idToken },
         {
-          onSuccess: () => {
+          onSuccess: (response) => {
             toast.success("Signed in with Google.");
-            navigateAfterAuth(redirectTo);
+            const dest = response.data.user.onboardingCompleted
+              ? redirectTo
+              : "/onboarding";
+            navigateAfterAuth(dest);
           },
           onError: (err) => toast.error(extractErrorMessage(err)),
         },
@@ -509,9 +512,7 @@ export function SignupForm() {
         if (typeof window !== "undefined") {
           sessionStorage.setItem(VERIFY_EMAIL_KEY, form.email);
         }
-        router.push(
-          `/verify-email?email=${encodeURIComponent(form.email)}`,
-        );
+        router.push(`/verify-email?email=${encodeURIComponent(form.email)}`);
       },
       onError: (err) => toast.error(extractErrorMessage(err)),
     });
@@ -611,17 +612,13 @@ export function LoginForm() {
           if (typeof window !== "undefined") {
             sessionStorage.setItem(VERIFY_EMAIL_KEY, form.email);
           }
-          router.push(
-            `/verify-email?email=${encodeURIComponent(form.email)}`,
-          );
+          router.push(`/verify-email?email=${encodeURIComponent(form.email)}`);
           return;
         }
         toast.success(response.message || "Logged in.");
-        localStorage.setItem(
-          "auth",
-          JSON.stringify(response)
-        );
-        navigateAfterAuth(redirect);
+        const dest = data.user.onboardingCompleted ? redirect : "/onboarding";
+        localStorage.setItem("auth", JSON.stringify(response));
+        navigateAfterAuth(dest);
       },
       onError: (err) => toast.error(extractErrorMessage(err)),
     });
@@ -700,8 +697,6 @@ export function VerifyEmailForm() {
   const verifyEmail = useVerifyEmail();
   const resendOtp = useResendOtp();
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
-  const [showWelcome, setShowWelcome] = useState(false);
-  const [welcomeName, setWelcomeName] = useState("Adventurer");
   const filled = useMemo(() => otp.every(Boolean), [otp]);
 
   const email = useMemo(() => {
@@ -727,11 +722,10 @@ export function VerifyEmailForm() {
       {
         onSuccess: (response) => {
           toast.success(response.message || "Email verified.");
-          setWelcomeName(response.data.user.firstName || "Adventurer");
           if (typeof window !== "undefined") {
             sessionStorage.removeItem(VERIFY_EMAIL_KEY);
           }
-          setShowWelcome(true);
+          navigateAfterAuth(destinationForUser(response.data.user));
         },
         onError: (err) => toast.error(extractErrorMessage(err)),
       },
@@ -756,42 +750,30 @@ export function VerifyEmailForm() {
   };
 
   return (
-    <>
-      {!showWelcome ? (
-        <form onSubmit={handleSubmit}>
-          <AuthDialog
-            title="Email Verification"
-            description="Check Your Inbox. We've sent a one time password to your email to secure your account."
-            buttonLabel={verifyEmail.isPending ? "Verifying..." : "Verify"}
-            size="wide"
-            actionDisabled={!filled || verifyEmail.isPending}
-            onAction={handleVerify}
-          >
-            <OtpInput
-              value={otp}
-              onChange={setOtp}
-              disabled={verifyEmail.isPending}
-            />
-            <button
-              type="button"
-              onClick={handleResend}
-              disabled={resendOtp.isPending}
-              className="mt-4 font-londrina text-sm font-[900] text-white/80 transition hover:text-white disabled:opacity-50 cursor-pointer"
-            >
-              {resendOtp.isPending ? "Sending..." : "Resend Code"}
-            </button>
-          </AuthDialog>
-        </form>
-      ) : null}
-      {showWelcome ? (
-        <AuthDialog
-          title={`Welcome, ${welcomeName}!`}
-          description="You have been granted access to The Legacy Ascent. This is a seasonal event. Your journey begins now. May your mind be sharp and your ascent be legendary."
-          buttonLabel="Begin Ascent"
-          onAction={() => navigateAfterAuth("/game")}
+    <form onSubmit={handleSubmit}>
+      <AuthDialog
+        title="Email Verification"
+        description="Check Your Inbox. We've sent a one time password to your email to secure your account."
+        buttonLabel={verifyEmail.isPending ? "Verifying..." : "Verify"}
+        size="wide"
+        actionDisabled={!filled || verifyEmail.isPending}
+        onAction={handleVerify}
+      >
+        <OtpInput
+          value={otp}
+          onChange={setOtp}
+          disabled={verifyEmail.isPending}
         />
-      ) : null}
-    </>
+        <button
+          type="button"
+          onClick={handleResend}
+          disabled={resendOtp.isPending}
+          className="mt-4 font-londrina text-sm font-[900] text-white/80 transition hover:text-white disabled:opacity-50 cursor-pointer"
+        >
+          {resendOtp.isPending ? "Sending..." : "Resend Code"}
+        </button>
+      </AuthDialog>
+    </form>
   );
 }
 
@@ -807,7 +789,9 @@ export function ForgotPasswordForm() {
       { email },
       {
         onSuccess: (response) => {
-          toast.success(response.message || "Reset code sent if account exists.");
+          toast.success(
+            response.message || "Reset code sent if account exists.",
+          );
           if (typeof window !== "undefined") {
             sessionStorage.setItem(RESET_EMAIL_KEY, email);
           }
@@ -891,10 +875,7 @@ export function ForgotVerifyForm() {
       {
         onSuccess: (response) => {
           if (typeof window !== "undefined") {
-            sessionStorage.setItem(
-              RESET_TOKEN_KEY,
-              response.data.resetToken,
-            );
+            sessionStorage.setItem(RESET_TOKEN_KEY, response.data.resetToken);
           }
           toast.success(response.message || "Code verified.");
           router.push("/reset-password");

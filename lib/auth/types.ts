@@ -14,6 +14,7 @@ export interface User {
   authProvider: "local" | "google";
   isVerified: boolean;
   role: "user" | "admin";
+  onboardingCompleted: boolean;
   treasury: number;
   levelProgress: LevelProgress;
   soundOn: boolean;

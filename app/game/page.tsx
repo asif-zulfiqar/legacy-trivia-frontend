@@ -1,6 +1,9 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
+import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
+import { SparkleIcon } from "../assets/icons";
 
 export default function Game() {
   const [started, setStarted] = useState(false);
@@ -13,16 +16,14 @@ export default function Game() {
   // =========================
   const sendUserDataToUnity = () => {
     // Full auth response
-    const authData = JSON.parse(
-      localStorage.getItem("auth") || "{}"
-    );
+    const authData = JSON.parse(localStorage.getItem("auth") || "{}");
 
     iframeRef.current?.contentWindow?.postMessage(
       {
         type: "USER_DATA",
         payload: authData,
       },
-      "https://alihamza293.github.io"
+      "https://alihamza293.github.io",
     );
 
     // console.log(
@@ -36,22 +37,15 @@ export default function Game() {
   // =========================
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-
       // Security check
-      if (
-        event.origin !==
-        "https://alihamza293.github.io"
-      )
-        return;
+      if (event.origin !== "https://alihamza293.github.io") return;
 
       console.log("FROM UNITY:", event.data);
 
       const { type, payload } = event.data;
 
       switch (type) {
-
         case "UNITY_MESSAGE":
-
           console.log("Unity Says:", payload);
 
           // ✅ Unity ready
@@ -70,16 +64,10 @@ export default function Game() {
       }
     };
 
-    window.addEventListener(
-      "message",
-      handleMessage
-    );
+    window.addEventListener("message", handleMessage);
 
     return () => {
-      window.removeEventListener(
-        "message",
-        handleMessage
-      );
+      window.removeEventListener("message", handleMessage);
     };
   }, []);
 
@@ -99,31 +87,20 @@ export default function Game() {
         await elem.requestFullscreen();
       }
     } catch (err) {
-      console.log(
-        "Fullscreen failed:",
-        err
-      );
+      console.log("Fullscreen failed:", err);
     }
 
     // Landscape lock
     try {
-      const orientation =
-        screen.orientation as unknown as {
-          lock?: (
-            orientation: "landscape"
-          ) => Promise<void>;
-        };
+      const orientation = screen.orientation as unknown as {
+        lock?: (orientation: "landscape") => Promise<void>;
+      };
 
       if (orientation.lock) {
-        await orientation.lock(
-          "landscape"
-        );
+        await orientation.lock("landscape");
       }
     } catch (err) {
-      console.log(
-        "Orientation lock failed:",
-        err
-      );
+      console.log("Orientation lock failed:", err);
     }
   };
 
@@ -133,21 +110,29 @@ export default function Game() {
       className="w-full h-screen bg-black flex items-center justify-center relative overflow-hidden"
     >
       {!started ? (
-        <div className="text-center text-white px-4">
-          <h1 className="text-2xl mb-4 font-semibold">
-            Legacy Trivia
-          </h1>
+        <div className="flex flex-col items-center justify-center text-center px-4">
+          <Image
+            src={"/images/logo.png"}
+            alt="GameHub Logo"
+            width={251}
+            height={160}
+            className="w-36 md:w-48 lg:w-56 h-auto drop-shadow-lg"
+          />
 
-          <button
+          <Button
+            type="button"
+            size="lg"
             onClick={startGame}
-            className="bg-green-500 hover:bg-green-600 transition px-6 py-3 rounded-xl text-lg"
+            className="-m-5 mb-6 h-[55px] min-w-[200px] px-8 py-0 font-londrina text-base md:text-[22px] font-[900] leading-none disabled:opacity-70"
           >
-            ▶ Play Game
-          </button>
+            Play Game
+            <span className="flex size-5 scale-[0.7] items-center justify-center">
+              <SparkleIcon />
+            </span>
+          </Button>
 
-          <p className="text-sm mt-4 opacity-70">
-            Rotate your device for best
-            experience
+          <p className="font-londrina text-base font-[900] text-white/80">
+            Rotate your device for best experience
           </p>
         </div>
       ) : (
