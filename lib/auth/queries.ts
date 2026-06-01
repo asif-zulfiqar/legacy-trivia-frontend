@@ -136,6 +136,20 @@ export function useResetPassword() {
   });
 }
 
+export function useCompleteOnboarding() {
+  const setUser = useAuthStore((s) => s.setUser);
+  return useMutation({
+    mutationFn: async () => {
+      const res = await api.post<ApiEnvelope<{ user: User }>>(
+        "/users/complete-onboarding",
+      );
+      const user = res.data.data.user;
+      setUser(user);
+      return res.data;
+    },
+  });
+}
+
 export function useLogout() {
   const clear = useAuthStore((s) => s.clear);
   return useMutation({

@@ -15,3 +15,14 @@ export function navigateAfterAuth(url: string) {
   if (typeof window === "undefined") return;
   window.location.assign(url);
 }
+
+/**
+ * Where to send a user right after a successful sign-in / verify.
+ * First-timers (onboarding not yet completed) go through the tutorial;
+ * everyone else lands in the game.
+ */
+export function destinationForUser(user: {
+  onboardingCompleted?: boolean;
+}): string {
+  return user.onboardingCompleted ? "/game" : "/onboarding";
+}

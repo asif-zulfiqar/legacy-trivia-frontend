@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const AUTH_HINT_COOKIE = "lt_auth";
 
-const PROTECTED_PREFIXES = ["/game"];
+const PROTECTED_PREFIXES = ["/game", "/onboarding"];
 const AUTH_PREFIXES = [
   "/login",
   "/signup",
@@ -40,6 +40,8 @@ export function proxy(req: NextRequest) {
 export const config = {
   matcher: [
     "/game/:path*",
+    "/onboarding/:path*",
+    "/onboarding",
     "/login",
     "/signup",
     "/verify-email",
