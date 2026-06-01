@@ -21,7 +21,7 @@ export function OnboardingShell({
 }) {
   return (
     <div
-      className="relative min-h-screen w-full overflow-hidden bg-[#040C1A] text-white"
+      className="relative min-h-screen w-full overflow-hidden bg-[#081738] text-white"
       style={
         background
           ? {
@@ -33,11 +33,11 @@ export function OnboardingShell({
       }
     >
       <div className="relative z-10 flex min-h-screen flex-col">
-        <div className="flex flex-1 items-center justify-center px-6 py-24 sm:px-10 lg:px-16">
+        <div className="flex flex-1 items-center justify-center px-6 py-12 md:py-24 sm:px-10 lg:px-16">
           {children}
         </div>
 
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between px-6 pb-8 sm:px-10 lg:px-16">
+        <div className="pointer-events-none flex items-center justify-between px-6 pb-8 sm:px-10 lg:px-16 mt-5">
           <div className="pointer-events-auto">{left}</div>
           <div className="pointer-events-auto">{right}</div>
         </div>

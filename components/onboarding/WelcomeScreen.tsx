@@ -25,7 +25,7 @@ export function WelcomeScreen({
         backgroundPosition: "center",
       }}
     >
-      <div className="absolute inset-0 bg-[#020411]/60 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-[url(/images/auth-bg.png)] bg-cover" />
       <div className="relative z-10 flex min-h-[366px] w-full max-w-[370px] items-center justify-center px-9 py-12 text-center sm:px-[35px]">
         <Image
           src="/images/form-popup.png"
@@ -38,7 +38,7 @@ export function WelcomeScreen({
           <h2 className="font-londrina text-[30px] font-[900] leading-none text-white">
             Welcome, {name}!
           </h2>
-          <p className="mx-auto mt-3 max-w-[405px] font-londrina text-sm font-[900] leading-[1.7] text-white">
+          <p className="mx-auto mt-3 max-w-[405px] font-londrina text-sm md:text-lg font-[900] leading-[1.7] text-white">
             You have been granted access to The Legacy Ascent. This is a
             seasonal event. Your journey begins now. May your mind be sharp and
             your ascent be legendary.

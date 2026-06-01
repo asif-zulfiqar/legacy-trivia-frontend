@@ -2,7 +2,7 @@
 
 import { ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
-import { SparkleIcon } from "@/app/assets/icons";
+import { BadgeIconOne, BadgeIconTwo, SparkleIcon } from "@/app/assets/icons";
 import { Leaderboard } from "@/components/common/Leaderboard";
 
 /**
@@ -12,33 +12,16 @@ import { Leaderboard } from "@/components/common/Leaderboard";
  * base cosmic colour, missing illustrations simply show their alt text).
  */
 
-const ONB = "/images/onboarding";
+const ONB = "/images";
 
 function Chip({ children }: { children: ReactNode }) {
   return (
-    <span className="inline-flex items-center rounded-full bg-[#16203C]/85 px-5 py-2 font-londrina text-xs font-[900] uppercase tracking-[0.12em] text-white/90">
-      {children}
-    </span>
-  );
-}
-
-function StepBadge({
-  number,
-  color,
-}: {
-  number: number;
-  color: "gold" | "teal";
-}) {
-  const styles =
-    color === "gold"
-      ? "bg-gradient-to-br from-[#FFC24B] to-[#E89A1C]"
-      : "bg-gradient-to-br from-[#3FD0D8] to-[#1C9AA8]";
-  return (
-    <span
-      className={`flex size-9 flex-shrink-0 items-center justify-center rounded-full font-londrina text-base font-[900] text-white shadow-[inset_0px_2px_1px_0px_#FFFFFF66] ${styles}`}
+    <Button
+      variant="ghost"
+      className="w-[150px] text-base font-londrina font-[900] uppercase text-white"
     >
-      {number}
-    </span>
+      {children}
+    </Button>
   );
 }
 
@@ -49,12 +32,12 @@ function HowToPlayScreen() {
       <img
         src="/images/logo.png"
         alt="Legacy Trivia"
-        className="mb-8 w-40 select-none sm:w-52"
+        className="w-40 select-none sm:w-52"
       />
-      <h1 className="font-londrina text-6xl font-[900] leading-none text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)] sm:text-7xl lg:text-8xl">
+      <h1 className="font-londrina text-5xl md:text-7xl font-[900] leading-none text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)] sm:text-7xl lg:text-8xl">
         How to Play
       </h1>
-      <p className="mt-6 font-londrina text-lg font-[900] text-white/85 sm:text-xl">
+      <p className="mt-2 font-londrina text-lg font-[900] text-white/85 sm:text-2xl">
         Understand the rules before you begin.
       </p>
     </div>
@@ -66,23 +49,27 @@ function GameObjectiveScreen() {
     <div className="grid w-full max-w-6xl items-center gap-10 lg:grid-cols-2">
       <div>
         <Chip>Your Goal</Chip>
-        <h2 className="mt-5 font-londrina text-5xl font-[900] leading-none text-white sm:text-6xl">
+        <h2 className="mt-5 font-londrina text-4xl md:text-6xl font-[900] leading-none text-white sm:text-6xl">
           Game Objective
         </h2>
-        <p className="mt-5 max-w-xl font-londrina text-lg font-[900] leading-relaxed text-white/85">
+        <p className="mt-5 max-w-xl font-londrina text-lg md:text-xl font-[900] leading-relaxed text-white/85">
           Climb the Ladder of Ascent by answering trivia questions. Each correct
           answer moves you up and increases your potential prize.
         </p>
         <ul className="mt-8 space-y-5">
           <li className="flex items-center gap-4">
-            <StepBadge number={1} color="gold" />
-            <span className="font-londrina text-lg font-[900] text-white">
+            <span className="shrink-0 w-[64px]">
+              <BadgeIconOne />
+            </span>
+            <span className="font-londrina text-lg md:text-xl font-[900] text-white">
               Answer 15 questions correctly to win $15.
             </span>
           </li>
           <li className="flex items-center gap-4">
-            <StepBadge number={2} color="teal" />
-            <span className="font-londrina text-lg font-[900] text-white">
+            <span className="shrink-0 w-[64px]">
+              <BadgeIconTwo />
+            </span>
+            <span className="font-londrina text-lg md:text-xl font-[900] text-white">
               Wrong answer = you drop to the last milestone you passed.
             </span>
           </li>
@@ -192,7 +179,9 @@ function LifelineCard({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={icon} alt={title} className="size-12 select-none" />
         </div>
-        <h3 className="font-londrina text-2xl font-[900] text-white">{title}</h3>
+        <h3 className="font-londrina text-2xl font-[900] text-white">
+          {title}
+        </h3>
         <p className="mt-2 font-londrina text-sm font-[900] leading-snug text-white/85">
           {description}
         </p>
@@ -268,7 +257,7 @@ export const STEPS: OnboardingStep[] = [
   { key: "welcome", popup: true },
   {
     key: "how-to-play",
-    background: `${ONB}/how-to-play-bg.png`,
+    background: `${ONB}/hero-bg.jpg`,
     content: <HowToPlayScreen />,
   },
   {

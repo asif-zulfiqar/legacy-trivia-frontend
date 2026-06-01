@@ -5,8 +5,8 @@ import { SparkleIcon } from "@/app/assets/icons";
 type NavVariant = "back" | "next";
 
 const VARIANT_STYLES: Record<NavVariant, string> = {
-  back: "bg-white text-[#091739] hover:bg-white/90",
-  next: "bg-[#A9DCF3] text-[#091739] hover:bg-[#bfe6f7]",
+  back: "bg-white text-[#0B122D] hover:bg-white/90",
+  next: "bg-[#72C1E2] text-[#0B122D] hover:bg-[#bfe6f7]",
 };
 
 export function NavButton({
