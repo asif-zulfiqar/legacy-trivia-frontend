@@ -28,7 +28,7 @@ export function WelcomeScreen({
       <div className="absolute inset-0 bg-[url(/images/auth-bg.png)] bg-cover" />
       <div className="relative z-10 flex min-h-[366px] w-full max-w-[370px] items-center justify-center px-9 py-12 text-center sm:px-[35px]">
         <Image
-          src="/images/form-popup.png"
+          src="/images/form-popup.jpg"
           alt=""
           fill
           sizes="370px"
