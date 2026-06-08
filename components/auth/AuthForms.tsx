@@ -452,7 +452,7 @@ function AuthDialog({
 function ImageFrame() {
   return (
     <Image
-      src="/images/form-popup.png"
+      src="/images/form-popup.jpg"
       alt=""
       fill
       sizes="370px"
