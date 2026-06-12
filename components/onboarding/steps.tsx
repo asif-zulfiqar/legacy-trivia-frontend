@@ -185,7 +185,13 @@ function LifelineCard({
         </div> */}
         <div className="mb-5 flex size-[88px] items-center justify-center rounded-full">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={icon} alt={title} className="select-none" />
+          <Image
+            src={icon}
+            alt={title}
+            className="select-none"
+            width={88}
+            height={88}
+          />
         </div>
         <h3 className="font-londrina text-2xl font-[900] text-white">
           {title}

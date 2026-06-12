@@ -73,14 +73,43 @@ api.interceptors.response.use(
   },
 );
 
+/**
+ * Pull the most user-facing message out of an axios error. Preference order:
+ *   1. `data.message` from the server envelope — the backend's validate
+ *      middleware now puts the specific field error here (e.g. "\"email\"
+ *      must be a valid email").
+ *   2. First entry in `data.details` if present — covers older shapes where
+ *      message was generic ("Validation failed") and detail had the real text.
+ *   3. axios's own `error.message` (network/timeout/etc).
+ *   4. Generic fallback.
+ */
 export function extractErrorMessage(error: unknown): string {
   if (axios.isAxiosError(error)) {
     const data = error.response?.data as
-      | { message?: string }
+      | {
+          message?: string;
+          details?: Record<string, string> | string[];
+        }
       | string
       | undefined;
+
     if (typeof data === "string" && data) return data;
-    if (data && typeof data === "object" && data.message) return data.message;
+
+    if (data && typeof data === "object") {
+      const generic = !data.message || /^validation failed\.?$/i.test(data.message);
+      if (!generic && data.message) return data.message;
+
+      if (data.details) {
+        if (Array.isArray(data.details) && data.details.length > 0) {
+          return data.details[0];
+        }
+        const first = Object.values(data.details)[0];
+        if (typeof first === "string" && first) return first;
+      }
+
+      if (data.message) return data.message;
+    }
+
     if (error.message) return error.message;
   }
   if (error instanceof Error) return error.message;
