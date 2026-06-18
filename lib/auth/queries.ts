@@ -6,6 +6,8 @@ import { useAuthStore } from "./store";
 import type {
   ApiEnvelope,
   AuthSuccessData,
+  EmailVerificationRequiredData,
+  LoginVerificationRequiredData,
   OtpPurpose,
   User,
 } from "./types";
@@ -17,6 +19,7 @@ export function useSignup() {
       lastName: string;
       email: string;
       password: string;
+      accessCode: string;
       referralCode?: string;
     }) => {
       const res = await api.post<ApiEnvelope<{ email: string }>>(
@@ -64,7 +67,11 @@ export function useLogin() {
   return useMutation({
     mutationFn: async (input: { email: string; password: string }) => {
       const res = await api.post<
-        ApiEnvelope<AuthSuccessData | { email: string; requiresVerification: true }>
+        ApiEnvelope<
+          | AuthSuccessData
+          | EmailVerificationRequiredData
+          | LoginVerificationRequiredData
+        >
       >("/auth/login", input);
       return res.data;
     },
@@ -84,9 +91,41 @@ export function useLogin() {
 export function useGoogleAuth() {
   const setSession = useAuthStore((s) => s.setSession);
   return useMutation({
-    mutationFn: async (input: { idToken: string; referralCode?: string }) => {
+    mutationFn: async (input: {
+      idToken: string;
+      accessCode?: string;
+      referralCode?: string;
+    }) => {
+      const res = await api.post<
+        ApiEnvelope<
+          | AuthSuccessData
+          | EmailVerificationRequiredData
+          | LoginVerificationRequiredData
+        >
+      >("/auth/google", input);
+      const data = res.data.data;
+      if ("accessToken" in data) {
+        setSession({
+          user: data.user,
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken,
+        });
+      }
+      return res.data;
+    },
+  });
+}
+
+export function useVerifyLoginOtp() {
+  const setSession = useAuthStore((s) => s.setSession);
+  return useMutation({
+    mutationFn: async (input: {
+      email: string;
+      otp: string;
+      loginToken: string;
+    }) => {
       const res = await api.post<ApiEnvelope<AuthSuccessData>>(
-        "/auth/google",
+        "/auth/verify-login",
         input,
       );
       const data = res.data.data;
@@ -95,6 +134,18 @@ export function useGoogleAuth() {
         accessToken: data.accessToken,
         refreshToken: data.refreshToken,
       });
+      return res.data;
+    },
+  });
+}
+
+export function useResendLoginOtp() {
+  return useMutation({
+    mutationFn: async (input: { email: string; loginToken: string }) => {
+      const res = await api.post<ApiEnvelope<{ email: string }>>(
+        "/auth/resend-login-otp",
+        input,
+      );
       return res.data;
     },
   });

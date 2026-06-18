@@ -30,10 +30,12 @@ import {
   useForgotPassword,
   useGoogleAuth,
   useLogin,
+  useResendLoginOtp,
   useResendOtp,
   useResetPassword,
   useSignup,
   useVerifyEmail,
+  useVerifyLoginOtp,
   useVerifyResetOtp,
 } from "@/lib/auth/queries";
 
@@ -53,6 +55,9 @@ interface AuthInputProps {
 const RESET_TOKEN_KEY = "lt_reset_token";
 const RESET_EMAIL_KEY = "lt_reset_email";
 const VERIFY_EMAIL_KEY = "lt_verify_email";
+const LOGIN_EMAIL_KEY = "lt_login_email";
+const LOGIN_TOKEN_KEY = "lt_login_token";
+const LOGIN_REDIRECT_KEY = "lt_login_redirect";
 
 function AuthHeading({
   title,
@@ -376,7 +381,7 @@ function OtpInput({
             event.preventDefault();
             handlePaste(event.clipboardData.getData("text"));
           }}
-          className="h-[59px] min-w-0 rounded-lg border border-[#BFC2FF]/35 bg-[#060625]/75 text-center font-londrina text-[28px] font-[900] text-white outline-none transition focus:border-[#FFB951] focus:ring-2 focus:ring-[#FFB951]/20 disabled:opacity-60"
+          className="h-[50px] min-w-0 rounded-lg border border-[#BFC2FF]/35 bg-[#060625]/75 text-center font-londrina text-[24px] font-[900] text-white outline-none transition focus:border-[#FFB951] focus:ring-2 focus:ring-[#FFB951]/20 disabled:opacity-60 sm:h-[54px]"
         />
       ))}
     </div>
@@ -461,26 +466,62 @@ function ImageFrame() {
   );
 }
 
-function useGoogleSignIn(redirectTo: string) {
+function useGoogleSignIn(
+  redirectTo: string,
+  options?: {
+    requireAccessCode?: boolean;
+    getAccessCode?: () => string;
+  },
+) {
   const googleAuth = useGoogleAuth();
 
   const onCredential = useCallback(
     (idToken: string) => {
+      const accessCode = options?.getAccessCode?.().trim() || "";
+      if (options?.requireAccessCode && !accessCode) {
+        toast.error("Access code required.");
+        return;
+      }
+
       googleAuth.mutate(
-        { idToken },
+        { idToken, accessCode },
         {
           onSuccess: (response) => {
+            const data = response.data;
+            if ("requiresVerification" in data) {
+              toast(response.message || "Please verify your email.");
+              if (typeof window !== "undefined") {
+                sessionStorage.setItem(VERIFY_EMAIL_KEY, data.email);
+              }
+              window.location.assign(
+                `/verify-email?email=${encodeURIComponent(data.email)}`,
+              );
+              return;
+            }
+            if ("requiresLoginVerification" in data) {
+              toast(response.message || "Verification code sent.");
+              if (typeof window !== "undefined") {
+                sessionStorage.setItem(LOGIN_EMAIL_KEY, data.email);
+                sessionStorage.setItem(LOGIN_TOKEN_KEY, data.loginToken);
+                sessionStorage.setItem(LOGIN_REDIRECT_KEY, redirectTo);
+              }
+              window.location.assign(
+                `/verify-email?purpose=login&email=${encodeURIComponent(data.email)}&redirect=${encodeURIComponent(redirectTo)}`,
+              );
+              return;
+            }
             toast.success("Signed in with Google.");
-            const dest = response.data.user.onboardingCompleted
-              ? redirectTo
-              : "/onboarding";
+            if (typeof window !== "undefined") {
+              localStorage.setItem("auth", JSON.stringify(response));
+            }
+            const dest = data.user.onboardingCompleted ? redirectTo : "/onboarding";
             navigateAfterAuth(dest);
           },
           onError: (err) => toast.error(extractErrorMessage(err)),
         },
       );
     },
-    [googleAuth, redirectTo],
+    [googleAuth, options, redirectTo],
   );
 
   return { onCredential, isPending: googleAuth.isPending };
@@ -488,16 +529,22 @@ function useGoogleSignIn(redirectTo: string) {
 
 export function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const signup = useSignup();
-  const { onCredential: onGoogle, isPending: googlePending } =
-    useGoogleSignIn("/game");
 
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
-    email: "",
+    email: searchParams?.get("email") || "",
     password: "",
+    accessCode: searchParams?.get("code") || "",
   });
+
+  const { onCredential: onGoogle, isPending: googlePending } =
+    useGoogleSignIn("/game", {
+      requireAccessCode: true,
+      getAccessCode: () => form.accessCode,
+    });
 
   const updateField = (field: keyof typeof form) => (value: string) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -574,6 +621,15 @@ export function SignupForm() {
             disabled={disabled}
             onChange={updateField("password")}
           />
+          <AuthInput
+            id="accessCode"
+            label="Access Code"
+            value={form.accessCode}
+            placeholder="Enter Access Code"
+            autoComplete="off"
+            disabled={disabled}
+            onChange={updateField("accessCode")}
+          />
         </div>
         <div className="mt-4">
           <PrimaryAuthButton disabled={disabled}>
@@ -615,8 +671,25 @@ export function LoginForm() {
           router.push(`/verify-email?email=${encodeURIComponent(form.email)}`);
           return;
         }
+        if (data && "requiresLoginVerification" in data) {
+          toast(response.message || "Verification code sent.");
+          if (typeof window !== "undefined") {
+            sessionStorage.setItem(LOGIN_EMAIL_KEY, data.email);
+            sessionStorage.setItem(LOGIN_TOKEN_KEY, data.loginToken);
+            sessionStorage.setItem(LOGIN_REDIRECT_KEY, redirect);
+          }
+          router.push(
+            `/verify-email?purpose=login&email=${encodeURIComponent(data.email)}&redirect=${encodeURIComponent(redirect)}`,
+          );
+          return;
+        }
         toast.success(response.message || "Logged in.");
-        const dest = data.user.onboardingCompleted ? redirect : "/onboarding";
+        const dest =
+          redirect.startsWith("/admin") && data.user.role === "admin"
+            ? redirect
+            : data.user.onboardingCompleted
+              ? redirect
+              : "/onboarding";
         localStorage.setItem("auth", JSON.stringify(response));
         navigateAfterAuth(dest);
       },
@@ -695,28 +768,87 @@ export function VerifyEmailForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const verifyEmail = useVerifyEmail();
+  const verifyLogin = useVerifyLoginOtp();
   const resendOtp = useResendOtp();
+  const resendLoginOtp = useResendLoginOtp();
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const filled = useMemo(() => otp.every(Boolean), [otp]);
+  const isLoginVerification = searchParams?.get("purpose") === "login";
 
   const email = useMemo(() => {
     const fromQuery = searchParams?.get("email");
     if (fromQuery) return fromQuery;
     if (typeof window !== "undefined") {
-      return sessionStorage.getItem(VERIFY_EMAIL_KEY) || "";
+      return (
+        sessionStorage.getItem(
+          isLoginVerification ? LOGIN_EMAIL_KEY : VERIFY_EMAIL_KEY,
+        ) || ""
+      );
     }
     return "";
-  }, [searchParams]);
+  }, [isLoginVerification, searchParams]);
+
+  const loginToken = useMemo(() => {
+    if (!isLoginVerification || typeof window === "undefined") return "";
+    return sessionStorage.getItem(LOGIN_TOKEN_KEY) || "";
+  }, [isLoginVerification]);
+
+  const loginRedirect = useMemo(() => {
+    if (!isLoginVerification) return "";
+    const fromQuery = searchParams?.get("redirect");
+    if (fromQuery) return fromQuery;
+    if (typeof window !== "undefined") {
+      return sessionStorage.getItem(LOGIN_REDIRECT_KEY) || "";
+    }
+    return "";
+  }, [isLoginVerification, searchParams]);
 
   useEffect(() => {
     if (!email && typeof window !== "undefined") {
-      toast.error("Email missing. Please sign up again.");
-      router.replace("/signup");
+      toast.error(
+        isLoginVerification
+          ? "Login verification expired. Please sign in again."
+          : "Email missing. Please sign up again.",
+      );
+      router.replace(isLoginVerification ? "/login" : "/signup");
+    } else if (isLoginVerification && !loginToken && typeof window !== "undefined") {
+      toast.error("Login verification expired. Please sign in again.");
+      router.replace("/login");
     }
-  }, [email, router]);
+  }, [email, isLoginVerification, loginToken, router]);
+
+  const pending = isLoginVerification
+    ? verifyLogin.isPending
+    : verifyEmail.isPending;
 
   const handleVerify = () => {
-    if (!filled || verifyEmail.isPending || !email) return;
+    if (!filled || pending || !email) return;
+    if (isLoginVerification) {
+      if (!loginToken) return;
+      verifyLogin.mutate(
+        { email, otp: otp.join(""), loginToken },
+        {
+          onSuccess: (response) => {
+            toast.success(response.message || "Logged in.");
+            if (typeof window !== "undefined") {
+              sessionStorage.removeItem(LOGIN_EMAIL_KEY);
+              sessionStorage.removeItem(LOGIN_TOKEN_KEY);
+              sessionStorage.removeItem(LOGIN_REDIRECT_KEY);
+              localStorage.setItem("auth", JSON.stringify(response));
+            }
+            const dest =
+              loginRedirect.startsWith("/admin") &&
+              response.data.user.role === "admin"
+                ? loginRedirect
+                : destinationForUser(response.data.user);
+            navigateAfterAuth(dest);
+          },
+          onError: (err) => toast.error(extractErrorMessage(err)),
+        },
+      );
+      return;
+    }
+
     verifyEmail.mutate(
       { email, otp: otp.join("") },
       {
@@ -724,6 +856,7 @@ export function VerifyEmailForm() {
           toast.success(response.message || "Email verified.");
           if (typeof window !== "undefined") {
             sessionStorage.removeItem(VERIFY_EMAIL_KEY);
+            localStorage.setItem("auth", JSON.stringify(response));
           }
           navigateAfterAuth(destinationForUser(response.data.user));
         },
@@ -733,7 +866,21 @@ export function VerifyEmailForm() {
   };
 
   const handleResend = () => {
-    if (!email || resendOtp.isPending) return;
+    if (!email) return;
+    if (isLoginVerification) {
+      if (!loginToken || resendLoginOtp.isPending) return;
+      resendLoginOtp.mutate(
+        { email, loginToken },
+        {
+          onSuccess: (response) =>
+            toast.success(response.message || "Code resent."),
+          onError: (err) => toast.error(extractErrorMessage(err)),
+        },
+      );
+      return;
+    }
+
+    if (resendOtp.isPending) return;
     resendOtp.mutate(
       { email, purpose: "email_verification" },
       {
@@ -752,25 +899,27 @@ export function VerifyEmailForm() {
   return (
     <form onSubmit={handleSubmit}>
       <AuthDialog
-        title="Email Verification"
+        title={isLoginVerification ? "Login Verification" : "Email Verification"}
         description="Check Your Inbox. We've sent a one time password to your email to secure your account."
-        buttonLabel={verifyEmail.isPending ? "Verifying..." : "Verify"}
+        buttonLabel={pending ? "Verifying..." : "Verify"}
         size="wide"
-        actionDisabled={!filled || verifyEmail.isPending}
+        actionDisabled={!filled || pending}
         onAction={handleVerify}
       >
         <OtpInput
           value={otp}
           onChange={setOtp}
-          disabled={verifyEmail.isPending}
+          disabled={pending}
         />
         <button
           type="button"
           onClick={handleResend}
-          disabled={resendOtp.isPending}
+          disabled={isLoginVerification ? resendLoginOtp.isPending : resendOtp.isPending}
           className="mt-4 font-londrina text-sm font-[900] text-white/80 transition hover:text-white disabled:opacity-50 cursor-pointer"
         >
-          {resendOtp.isPending ? "Sending..." : "Resend Code"}
+          {(isLoginVerification ? resendLoginOtp.isPending : resendOtp.isPending)
+            ? "Sending..."
+            : "Resend Code"}
         </button>
       </AuthDialog>
     </form>

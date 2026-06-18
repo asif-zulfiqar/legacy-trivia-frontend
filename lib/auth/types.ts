@@ -1,8 +1,9 @@
 export interface LevelProgress {
   level1Completed: boolean;
   level2Completed: boolean;
-  level1HighScore: number;
-  level2HighScore: number;
+  level1CompletedAt?: string;
+  level2CompletedAt?: string;
+  highestLevelUnlocked: number;
 }
 
 export interface User {
@@ -14,6 +15,7 @@ export interface User {
   authProvider: "local" | "google";
   isVerified: boolean;
   role: "user" | "admin";
+  approved?: boolean;
   onboardingCompleted: boolean;
   treasury: number;
   levelProgress: LevelProgress;
@@ -26,6 +28,17 @@ export interface AuthSuccessData {
   accessToken: string;
   refreshToken: string;
   refreshTokenExpiresAt?: string;
+}
+
+export interface EmailVerificationRequiredData {
+  email: string;
+  requiresVerification: true;
+}
+
+export interface LoginVerificationRequiredData {
+  email: string;
+  loginToken: string;
+  requiresLoginVerification: true;
 }
 
 export interface ApiEnvelope<T> {

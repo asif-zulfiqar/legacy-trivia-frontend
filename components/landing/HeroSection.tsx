@@ -47,17 +47,19 @@ export function HeroSection() {
           It&apos;s a seasonal challenge.
         </p>
 
-        {/* CTA Button */}
-        <Link href="/game">
-          <Button
-            variant="primary"
-            size="lg"
-            className="text-base md:text-[27px] font-[900] font-londrina px-10 py-4 rounded-full"
-          >
-            Request Access
-            <SparkleIcon />
-          </Button>
-        </Link>
+        {/* CTA Buttons */}
+        <div className="flex flex-col items-center gap-3 sm:flex-row">
+          <Link href="/request-access">
+            <Button
+              variant="primary"
+              size="lg"
+              className="text-base md:text-[27px] font-[900] font-londrina px-10 py-4 rounded-full"
+            >
+              Request Access
+              <SparkleIcon />
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* ── Store Badges ──────────────────────────────────────────── */}
